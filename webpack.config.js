@@ -13,13 +13,11 @@ const ASSET_PATH = process.env.ASSET_PATH || '/';
 
 const alias = {
   '@': path.resolve(__dirname, 'src/'),
-  secrets: path.join(__dirname, 'secrets.blank.js'),
   '@business': path.resolve(__dirname, 'business/dev'),
 };
 
 // load the secrets
-const secretsPath = path.join(__dirname, `secrets.${env.NODE_ENV}.js`);
-
+const secretsPath = path.join(__dirname, `.${env.NODE_ENV}.js`);
 const fileExtensions = [
   'jpg',
   'jpeg',

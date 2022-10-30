@@ -1,8 +1,12 @@
 <template>
   <div v-if="currentLog.id" class="container pt-8 pb-4">
     <div class="flex items-center">
-      <button v-tooltip:bottom="t('workflow.blocks.go-back.name')" role="button"
-        class="h-12 px-1 transition mr-2 bg-input rounded-lg dark:text-gray-300 text-gray-600" @click="goBack">
+      <button
+        v-tooltip:bottom="t('workflow.blocks.go-back.name')"
+        role="button"
+        class="h-12 px-1 transition mr-2 bg-input rounded-lg dark:text-gray-300 text-gray-600"
+        @click="goBack"
+      >
         <v-remixicon name="riArrowLeftSLine" />
       </button>
       <div>
@@ -11,13 +15,13 @@
         </h1>
         <p class="text-gray-600 dark:text-gray-200">
           {{
-              t(`log.description.text`, {
-                status: t(
-                  `log.description.status.${currentLog.status || 'success'}`
-                ),
-                date: dayjs(currentLog.startedAt).format('DD MMM'),
-                duration: countDuration(currentLog.startedAt, currentLog.endedAt),
-              })
+            t(`log.description.text`, {
+              status: t(
+                `log.description.status.${currentLog.status || 'success'}`
+              ),
+              date: dayjs(currentLog.startedAt).format('DD MMM'),
+              duration: countDuration(currentLog.startedAt, currentLog.endedAt),
+            })
           }}
         </p>
       </div>
@@ -37,9 +41,17 @@
         {{ tab.name }}
       </ui-tab>
     </ui-tabs>
-    <ui-tab-panels :model-value="state.activeTab" class="mt-4 pb-4" style="min-height: 500px">
+    <ui-tab-panels
+      :model-value="state.activeTab"
+      class="mt-4 pb-4"
+      style="min-height: 500px"
+    >
       <ui-tab-panel value="logs">
-        <logs-history :current-log="currentLog" :ctx-data="ctxData" :parent-log="parentLog" />
+        <logs-history
+          :current-log="currentLog"
+          :ctx-data="ctxData"
+          :parent-log="parentLog"
+        />
       </ui-tab-panel>
       <ui-tab-panel value="table">
         <logs-table :current-log="currentLog" :table-data="tableData" />
@@ -51,12 +63,12 @@
   </div>
 </template>
 <script setup>
-import { shallowReactive, shallowRef, watch } from 'vue';
+import { shallowReactive, shallowRef, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import dbLogs from '@/db/logs';
 import dayjs from '@/lib/dayjs';
-import { fetchApi } from "@/utils/api"
+import { fetchApi } from '@/utils/api';
 import { useWorkflowStore } from '@/stores/workflow';
 import { countDuration, convertArrObjTo2DArr } from '@/utils/helper';
 import LogsTable from '@/components/newtab/logs/LogsTable.vue';
@@ -70,7 +82,6 @@ const workflowStore = useWorkflowStore();
 
 const ctxData = shallowRef({});
 const parentLog = shallowRef(null);
-
 const backHistory = window.history.state.back;
 const tabs = [
   { id: 'logs', name: t('common.log', 2) },
@@ -94,28 +105,31 @@ const currentLog = shallowRef({
     variables: {},
   },
 });
+const workflow = computed(() => {
+  return workflowStore.getById(currentLog.value.workflowId);
+});
 
 function goBack() {
   router.go(-1);
 }
 const saveCategoryData = async () => {
+  const tableLogData = currentLog.value.data?.table;
+  const variableLogData = currentLog.value.data?.variables?.data?.categories;
   const categroy_linklist_data = {
     name: currentLog.value.name,
-    categories: tableData.value || []
-  }
+    categories: variableLogData || tableLogData || [],
+  };
   const payload = {
     categroy_linklist_data: JSON.stringify(categroy_linklist_data),
-    manufactor_status: 6
-  }
-  const response = await fetchApi(`/admin/manufactors/${currentLog.value.name}`, {
+    manufactor_status: 6,
+    workflow: workflow.value,
+  };
+  await fetchApi(`/workflows/manufactors/${currentLog.value.name}`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
-  const data = await response.json();
-
-  if (!response.ok) console.error(data.message);
-  alert('save successfully!')
-}
+  alert('save successfully!');
+};
 function deleteLog() {
   dbLogs.items
     .where('id')
@@ -130,15 +144,15 @@ function deleteLog() {
       router.replace('/logs');
     });
 }
-function goToWorkflow() {
-  let path = `/workflows/${currentLog.value.workflowId}`;
+// function goToWorkflow() {
+//   let path = `/workflows/${currentLog.value.workflowId}`;
 
-  if (backHistory.startsWith(path)) {
-    path = backHistory;
-  }
+//   if (backHistory.startsWith(path)) {
+//     path = backHistory;
+//   }
 
-  router.push(path);
-}
+//   router.push(path);
+// }
 function convertToTableData() {
   const data = currentLog.value.data?.table;
   if (!data) return;

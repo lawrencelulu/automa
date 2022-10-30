@@ -20,9 +20,6 @@
 .history
 *.log
 
-# secrets
-secrets.production.js
-secrets.development.js
 get-pass-key.js
 
 /business/prod
